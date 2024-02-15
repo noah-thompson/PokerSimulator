@@ -1261,7 +1261,7 @@ struct GameManager
 	void DealWholeGame(Deck &deck, HandDefinitions &def)
 	{
 		DealAllPlayers(deck);
-		RunSimulatedHandsPreFlop(deck, def);
+		//RunSimulatedHandsPreFlop(deck, def);
 		//GetAndPrintCurrentHands(def);
 		DealFlop(deck);
 		//RunSimulatedHandsPreTurn(deck, def);
