@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <time.h>
 
 struct Card
 {
@@ -971,6 +972,8 @@ struct GameManager
 	std::vector<Player> players;
 	int minPlayerCount = 1;
 	int maxPlayerCount = 8;
+	std::vector<int> temp;
+	std::vector<std::vector<int>> ret;
 
 	Card Draw(Deck &deck)
 	{	
@@ -1110,11 +1113,43 @@ struct GameManager
 		}
 	}
 
+	void GetCardCombinations(std::vector<Card> deck, int needed, int have, int start, std::vector<bool> checked)
+	{
+		
+		if (have > needed)
+		{
+			return;
+		}
+		else if (have == needed)
+		{
+			for (int i = 0; i < deck.size(); i++)
+			{
+				if (checked[i])
+				{
+					temp.push_back(i);
+				}
+			}
+			temp.clear();
+			ret.push_back(temp);
+		}
+
+		if (start == deck.size())
+		{
+			return;
+		}
+
+		checked[start] = true;
+		GetCardCombinations(deck, needed, have + 1, start + 1, checked);
+
+		checked[start] = false;
+		GetCardCombinations(deck, needed,have, start + 1, checked);
+	}
 
 	void RunSimulatedHandsPreFlop(Deck& deck, HandDefinitions& def)
 	{
 		std::vector<Player> playersClone;
 		std::vector<int> winnerCount;
+		std::vector<bool> checked;
 		int totalHands = 0;
 		
 		int i,j,k,l,m,n;
@@ -1122,47 +1157,40 @@ struct GameManager
 		{
 			winnerCount.push_back(0);
 		}
-
-		for (i = 0; i < deck.deck.size()-4; i++)
+		for (i = 0; i < deck.deck.size(); i++)
 		{
-			for (j = i + 1; j < deck.deck.size() - 3; j++)
+			checked.push_back(false);
+		}
+		
+		GetCardCombinations(deck.deck, 5, 0, 0, checked);
+
+		for (i = 0; i < ret.size(); i++)
+		{
+			playersClone = players;
+			DealSpecificCommunityCard(playersClone, deck.deck[ret[i][0]]);
+			DealSpecificCommunityCard(playersClone, deck.deck[ret[i][1]]);
+			DealSpecificCommunityCard(playersClone, deck.deck[ret[i][2]]);
+			DealSpecificCommunityCard(playersClone, deck.deck[ret[i][3]]);
+			DealSpecificCommunityCard(playersClone, deck.deck[ret[i][4]]);
+
+			for (i = 0; i < playersClone.size(); i++)
 			{
-				for (k = j + 1; k < deck.deck.size() - 2; k++)
+
+				OrderCards(players[i], 0, players[i].cards.size() - 1);
+				def.ReturnBestHand(playersClone[i]);
+			}
+
+			def.DetermineWinner(playersClone);
+			totalHands++;
+			for (i = 0; i < playersClone.size(); i++)
+			{
+				if (playersClone[i].place == 1)
 				{
-					for (l = k + 1; l < deck.deck.size() - 1; l++)
-					{
-						for (m = l + 1; m < deck.deck.size(); m++)
-						{
-							playersClone = players;
-							DealSpecificCommunityCard(playersClone, deck.deck[i]);
-							DealSpecificCommunityCard(playersClone, deck.deck[j]);
-							DealSpecificCommunityCard(playersClone, deck.deck[k]);
-							DealSpecificCommunityCard(playersClone, deck.deck[l]);
-							DealSpecificCommunityCard(playersClone, deck.deck[m]);
-
-							for (n = 0; n < playersClone.size();n++)
-							{
-
-								OrderCards(players[n], 0, players[n].cards.size() - 1);
-								def.ReturnBestHand(playersClone[n]);
-							}
-
-							def.DetermineWinner(playersClone);
-							totalHands++;
-							for (n = 0; n < playersClone.size(); n++)
-							{
-								if (playersClone[n].place == 1)
-								{
-									winnerCount[n]++;									
-								}
-							}
-
-							playersClone.clear();
-						}
-					}
+					winnerCount[i]++;
 				}
 			}
 		}
+
 		for (i = 0; i < players.size(); i++)
 		{
 			std::cout << "Player " << i + 1 << " Would win " << winnerCount[i]/(float)totalHands * 100.0f << "% of Hands" << std::endl;
@@ -1261,7 +1289,12 @@ struct GameManager
 	void DealWholeGame(Deck &deck, HandDefinitions &def)
 	{
 		DealAllPlayers(deck);
-		//RunSimulatedHandsPreFlop(deck, def);
+		time_t begin, end;
+		time(&begin);
+		RunSimulatedHandsPreFlop(deck, def);
+		time(&end);
+		time_t elapsed = end - begin;
+		//std::cout << "Time measured: " << elapsed << std::endl;
 		//GetAndPrintCurrentHands(def);
 		DealFlop(deck);
 		//RunSimulatedHandsPreTurn(deck, def);
