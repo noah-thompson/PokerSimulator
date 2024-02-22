@@ -1115,7 +1115,6 @@ struct GameManager
 
 	void GetCardCombinations(std::vector<Card> deck, int needed, int have, int start, std::vector<bool> checked)
 	{
-		
 		if (have > needed)
 		{
 			return;
@@ -1129,8 +1128,9 @@ struct GameManager
 					temp.push_back(i);
 				}
 			}
-			temp.clear();
 			ret.push_back(temp);
+			temp.clear();
+			return;
 		}
 
 		if (start == deck.size())
@@ -1152,7 +1152,7 @@ struct GameManager
 		std::vector<bool> checked;
 		int totalHands = 0;
 		
-		int i,j,k,l,m,n;
+		int i,j;
 		for (i = 0; i < players.size(); i++)
 		{
 			winnerCount.push_back(0);
@@ -1164,6 +1164,7 @@ struct GameManager
 		
 		GetCardCombinations(deck.deck, 5, 0, 0, checked);
 
+		std::cout << ret.size() << std::endl;
 		for (i = 0; i < ret.size(); i++)
 		{
 			playersClone = players;
@@ -1173,20 +1174,19 @@ struct GameManager
 			DealSpecificCommunityCard(playersClone, deck.deck[ret[i][3]]);
 			DealSpecificCommunityCard(playersClone, deck.deck[ret[i][4]]);
 
-			for (i = 0; i < playersClone.size(); i++)
+			for (j = 0; j < playersClone.size(); j++)
 			{
-
-				OrderCards(players[i], 0, players[i].cards.size() - 1);
-				def.ReturnBestHand(playersClone[i]);
+				OrderCards(players[j], 0, players[j].cards.size() - 1);
+				def.ReturnBestHand(playersClone[j]);
 			}
 
 			def.DetermineWinner(playersClone);
 			totalHands++;
-			for (i = 0; i < playersClone.size(); i++)
+			for (j = 0; j < playersClone.size(); j++)
 			{
-				if (playersClone[i].place == 1)
+				if (playersClone[j].place == 1)
 				{
-					winnerCount[i]++;
+					winnerCount[j]++;
 				}
 			}
 		}
